@@ -13,7 +13,13 @@ This is a gaudiness file to show you how to run the Terraform module along with 
 
 To deploy this project run the following commands: 
 
-NOTE: the OS used is ubuntu with bash console. 
+NOTE: the OS used is ubuntu with bash console.
+
+Open the terminal and run the aws configure command to configure default credentials.
+```bash
+aws configure
+```
+With this, we have successfully set up our environment to begin working with Terraform and AWS.
 
 ### Installation of TFlint (optional):
 TFlint is a static analysis and linting tool for Terraform configurations, helping developers identify issues and enforce best practices in their infrastructure-as-code projects.
@@ -64,6 +70,10 @@ terraform plan -var-file=variables-test.tfvars
 # Apply the changes defined in the Terraform configuration to the infrastructure.
 terraform apply -var-file=variables-test.tfvars
 ```
+After you finish deployment, you can destroy all resource using the following:
+```bash
+terraform destroy -var-file=variables-test.tfvars
+```
 ## Appendix
 
 Please find the scripts used for:
@@ -88,7 +98,22 @@ systemctl enable httpd
 echo "Hello from Terraform" > /var/www/html/index.html
 ```
 ### Installation of Nginx container
-To deploy Nginx container to the cluster using `kubectl`. Run:
+First you need to run the following command to retrieve the access credentials for your cluster and configure kubectl.
+```bash
+aws eks --region $(terraform output -raw region) update-kubeconfig \
+--name $(terraform output -raw cluster_name)
+```
+You can now use `kubectl` to manage your cluster and deploy Kubernetes configurations to it.
+Verify your cluster configuration.
+
+First, get information about the cluster and verify that all three worker nodes are part of the cluster.
+```bash
+kubectl cluster-info
+
+kubectl get nodes
+```
+
+Now, To deploy Nginx container to the cluster using `kubectl`. Run:
 
 ```bash
 kubectl create deployment nginx --image=nginx

@@ -13,10 +13,10 @@ locals {
   }
   eks_managed_node_group_first = {
     description = "Specifies names of eks managed node groups"
-    name    = "${var.environment_name}-${var.region_abr}"
+    name        = "${var.environment_name}-${var.region_abr}"
   }
   eks_managed_node_group_second = {
     description = "Specifies names of eks managed node groups"
-    name    = "${var.environment_name}-${var.region_abr}"
+    name        = "${var.environment_name}-${var.region_abr}"
   }
 }

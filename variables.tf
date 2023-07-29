@@ -27,6 +27,18 @@ variable "public_subnet_third_address" {
   description = "Specifies the address prefix of the third public subnet"
   type        = string
 }
+variable "private_subnet_first_address" {
+  description = "Specifies the address prefix of the first private subnet"
+  type        = string
+}
+variable "private_subnet_second_address" {
+  description = "Specifies the address prefix of the second private subnet"
+  type        = string
+}
+variable "private_subnet_third_address" {
+  description = "Specifies the address prefix of the third private subnet"
+  type        = string
+}
 variable "vpc_address" {
   description = "Specifies the address prefix of the VPC"
   type        = string

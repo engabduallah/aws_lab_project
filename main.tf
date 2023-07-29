@@ -1,60 +1,36 @@
 provider "aws" {
   region = var.region
 }
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "5.0.0"
 
-resource "aws_vpc" "main" {
-  cidr_block = var.vpc_address
-}
+  name = "education-vpc"
 
-resource "aws_subnet" "public_subnet_1" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.public_subnet_first_address
-  availability_zone = var.region_availability_zone[0]
-}
+  cidr = var.vpc_address
+  azs  = var.region_availability_zone
 
-resource "aws_subnet" "public_subnet_2" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.public_subnet_second_address
-  availability_zone = var.region_availability_zone[1]
-}
+  private_subnets = [var.private_subnet_first_address,var.private_subnet_second_address, var.private_subnet_third_address]
+  public_subnets  = [var.public_subnet_first_address,var.public_subnet_second_address, var.public_subnet_third_address]
 
-resource "aws_subnet" "public_subnet_3" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.public_subnet_third_address
-  availability_zone = var.region_availability_zone[2]
-}
+  enable_nat_gateway   = true
+  single_nat_gateway   = true
+  enable_dns_hostnames = true
 
-resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.main.id
-}
-
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.gw.id
-  }
-}
-
-resource "aws_route_table_association" "public_subnet_1" {
-  subnet_id      = aws_subnet.public_subnet_1.id
-  route_table_id = aws_route_table.public.id
-}
-
-resource "aws_route_table_association" "public_subnet_2" {
-  subnet_id      = aws_subnet.public_subnet_2.id
-  route_table_id = aws_route_table.public.id
-}
-
-resource "aws_route_table_association" "public_subnet_3" {
-  subnet_id      = aws_subnet.public_subnet_3.id
-  route_table_id = aws_route_table.public.id
+#  public_subnet_tags = {
+#    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+#    "kubernetes.io/role/elb"                      = 1
+#  }
+#
+#  private_subnet_tags = {
+#    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+#    "kubernetes.io/role/internal-elb"             = 1
+#  }
 }
 resource "aws_security_group" "my_security_group" {
   name        = local.security_group_name.name
   description = "Allow inbound traffic"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = module.vpc.vpc_id
 
   ingress {
     from_port   = 22
@@ -105,7 +81,7 @@ resource "aws_launch_configuration" "example" {
   security_groups = [aws_security_group.my_security_group.id]
 
   user_data = file("${path.module}/userdata.sh")
-
+  associate_public_ip_address = true
   lifecycle {
     create_before_destroy = true
   }
@@ -118,44 +94,45 @@ resource "aws_autoscaling_group" "example" {
 
   launch_configuration = aws_launch_configuration.example.id
 
-  vpc_zone_identifier = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id, aws_subnet.public_subnet_3.id]
+  vpc_zone_identifier = module.vpc.public_subnets
+
 }
 
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "19.15.3"
-
-  cluster_name    = local.eks_cluster_name.name
-  cluster_version = var.eks_cluster_version
-
-  vpc_id                         = aws_vpc.main.id
-  subnet_ids                     = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id, aws_subnet.public_subnet_3.id]
-  cluster_endpoint_public_access = true
-
-  eks_managed_node_group_defaults = {
-    ami_type = "AL2_x86_64"
-
-  }
-
-  eks_managed_node_groups = {
-    one = {
-      name = local.eks_managed_node_group_first.name
-
-      instance_types = var.eks_node_instance_type
-
-      min_size     = 1
-      max_size     = 3
-      desired_size = 2
-    }
-
-    two = {
-      name = local.eks_managed_node_group_second.name
-
-      instance_types = var.eks_node_instance_type
-
-      min_size     = 1
-      max_size     = 2
-      desired_size = 1
-    }
-  }
-}
+#module "eks" {
+#  source  = "terraform-aws-modules/eks/aws"
+#  version = "19.15.3"
+#
+#  cluster_name    = local.eks_cluster_name.name
+#  cluster_version = var.eks_cluster_version
+#
+#  vpc_id                         = aws_vpc.main.id
+#  subnet_ids                     = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id, aws_subnet.public_subnet_3.id]
+#  cluster_endpoint_public_access = true
+#
+#  eks_managed_node_group_defaults = {
+#    ami_type = "AL2_x86_64"
+#
+#  }
+#
+#  eks_managed_node_groups = {
+#    one = {
+#      name = local.eks_managed_node_group_first.name
+#
+#      instance_types = var.eks_node_instance_type
+#
+#      min_size     = 1
+#      max_size     = 3
+#      desired_size = 2
+#    }
+#
+#    two = {
+#      name = local.eks_managed_node_group_second.name
+#
+#      instance_types = var.eks_node_instance_type
+#
+#      min_size     = 1
+#      max_size     = 2
+#      desired_size = 1
+#    }
+#  }
+#}

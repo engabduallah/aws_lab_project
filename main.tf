@@ -10,22 +10,22 @@ module "vpc" {
   cidr = var.vpc_address
   azs  = var.region_availability_zone
 
-  private_subnets = [var.private_subnet_first_address,var.private_subnet_second_address, var.private_subnet_third_address]
-  public_subnets  = [var.public_subnet_first_address,var.public_subnet_second_address, var.public_subnet_third_address]
+  private_subnets = [var.private_subnet_first_address, var.private_subnet_second_address, var.private_subnet_third_address]
+  public_subnets  = [var.public_subnet_first_address, var.public_subnet_second_address, var.public_subnet_third_address]
 
   enable_nat_gateway   = true
   single_nat_gateway   = true
   enable_dns_hostnames = true
 
-#  public_subnet_tags = {
-#    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
-#    "kubernetes.io/role/elb"                      = 1
-#  }
-#
-#  private_subnet_tags = {
-#    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
-#    "kubernetes.io/role/internal-elb"             = 1
-#  }
+  #  public_subnet_tags = {
+  #    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+  #    "kubernetes.io/role/elb"                      = 1
+  #  }
+  #
+  #  private_subnet_tags = {
+  #    "kubernetes.io/cluster/${local.cluster_name}" = "shared"
+  #    "kubernetes.io/role/internal-elb"             = 1
+  #  }
 }
 resource "aws_security_group" "my_security_group" {
   name        = local.security_group_name.name
@@ -74,13 +74,18 @@ data "aws_ami" "aws_linux2" {
     values = ["x86_64"]
   }
 }
+// Sends your public key to the instance
+resource "aws_key_pair" "key-pair" {
+  key_name   = "ireland-region-key-pair"
+  public_key = file("${path.module}/id_rsa.pub")
+}
 resource "aws_launch_configuration" "example" {
-  name            = local.ec2_instance_name.name
-  image_id        = data.aws_ami.aws_linux2.id
-  instance_type   = var.ec2_instance_type
-  security_groups = [aws_security_group.my_security_group.id]
-
-  user_data = file("${path.module}/userdata.sh")
+  name                        = local.ec2_instance_name.name
+  image_id                    = data.aws_ami.aws_linux2.id
+  instance_type               = var.ec2_instance_type
+  security_groups             = [aws_security_group.my_security_group.id]
+  key_name                    = aws_key_pair.key-pair.id
+  user_data                   = file("${path.module}/userdata.sh")
   associate_public_ip_address = true
   lifecycle {
     create_before_destroy = true

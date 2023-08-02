@@ -1,3 +1,6 @@
 /.idea/
 /terraform.tfstate
 /.terraform/
+/id_rsa.pub
+/terraform.tfstate.backup
+/.terraform.tfstate.lock.info

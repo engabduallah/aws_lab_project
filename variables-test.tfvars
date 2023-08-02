@@ -12,8 +12,8 @@ private_subnet_first_address  = "10.3.4.0/24"
 private_subnet_second_address = "10.3.5.0/24"
 private_subnet_third_address  = "10.3.6.0/24"
 
-vpc_address                  = "10.3.0.0/16"
-region_availability_zone     = ["us-east-1a", "us-east-1b", "us-east-1c"]
+vpc_address              = "10.3.0.0/16"
+region_availability_zone = ["us-east-1a", "us-east-1b", "us-east-1c"]
 
 ec2_instance_type      = "t2.micro"
 eks_node_instance_type = ["t3.small"]
